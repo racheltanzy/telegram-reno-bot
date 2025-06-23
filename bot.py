@@ -10,8 +10,18 @@ import json, os
 creds_dict = json.loads(os.environ["GOOGLE_CREDS_JSON"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
-sheet = client.open("House_Reno_Expenses").sheet1
+worksheet = client.open("House_Reno_Expenses").sheet1
 
+from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+
+# Only apply formatting once
+if worksheet.acell('F1').value != 'formatted':
+    money_format = CellFormat(
+        numberFormat=NumberFormat(type="NUMBER", pattern="$#,##0.00")
+    )
+    format_cell_range(worksheet, 'D2:D1000', money_format)  # Adjust range if needed
+    worksheet.update('F1', 'formatted')
+                  
 # Bot Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -43,7 +53,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         item, amount, notes = [x.strip() for x in update.message.text.split("|")]
         date = datetime.datetime.now().strftime("%Y-%m-%d")
-        sheet.append_row([date, category, item, amount, notes])
+        worksheet.append_row([date, category, item, amount, notes])
         await update.message.reply_text(
             "Expense added! View here: https://docs.google.com/spreadsheets/d/193CMc6umAkjLgVlOIoLsud-cExLgDYAPl8svyA1XG1c/edit?usp=sharing"
         )
