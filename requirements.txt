@@ -5,6 +5,7 @@ charset-normalizer==3.4.2
 google-auth==2.40.3
 google-auth-oauthlib==1.2.2
 gspread==6.2.1
+gspread-formatting==1.2.1
 h11==0.16.0
 httpcore==1.0.9
 httplib2==0.22.0
