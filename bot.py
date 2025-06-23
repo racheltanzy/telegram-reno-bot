@@ -1,28 +1,42 @@
+import os
+import json
+import datetime
+import threading
+from flask import Flask
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import datetime
+from gspread_formatting import CellFormat, NumberFormat, format_cell_range
 
-# Setup Google Sheets
+# === Flask to keep Render alive ===
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return "Bot is running."
+
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(host="0.0.0.0", port=port)
+
+# === Google Sheets Setup ===
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-import json, os
 creds_dict = json.loads(os.environ["GOOGLE_CREDS_JSON"])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 worksheet = client.open("House_Reno_Expenses").sheet1
 
-from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-
-# Only apply formatting once
+# Apply money formatting only once
 if worksheet.acell('F1').value != 'formatted':
     money_format = CellFormat(
         numberFormat=NumberFormat(type="NUMBER", pattern="$#,##0.00")
     )
-    format_cell_range(worksheet, 'D2:D1000', money_format)  # Adjust range if needed
+    format_cell_range(worksheet, 'D2:D1000', money_format)
     worksheet.update('F1', [['formatted']])
-                  
-# Bot Handlers
+
+# === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("Plumbing", callback_data="Plumbing"),
@@ -63,9 +77,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
-# Main
-app = ApplicationBuilder().token("8143805573:AAEqqg_r6t-S5ebW_ynmdYljW-bVXzC31kc").build()
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(button))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-app.run_polling()
+# === Main ===
+if __name__ == '__main__':
+    # Run dummy web server in background
+    threading.Thread(target=run_flask).start()
+
+    # Start Telegram bot
+    bot_app = ApplicationBuilder().token("8143805573:AAEqqg_r6t-S5ebW_ynmdYljW-bVXzC31kc").build()
+    bot_app.add_handler(CommandHandler("start", start))
+    bot_app.add_handler(CallbackQueryHandler(button))
+    bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    bot_app.run_polling()
