@@ -34,7 +34,7 @@ if worksheet.acell('F1').value != 'formatted':
         numberFormat=NumberFormat(type="NUMBER", pattern="$#,##0.00")
     )
     format_cell_range(worksheet, 'D2:D1000', money_format)
-    worksheet.update('F1', [['formatted']])
+    worksheet.update('F1', 'formatted')  # <- Fixed: pass a single string, not [['formatted']]
 
 # === Telegram Bot Handlers ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
