@@ -66,16 +66,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     try:
         item, amount, notes = [x.strip() for x in update.message.text.split("|")]
+        
+        # Convert amount to float (remove $ or commas if user adds them)
+        amount = float(amount.replace("$", "").replace(",", ""))
+        
         date = datetime.datetime.now().strftime("%Y-%m-%d")
         worksheet.append_row([date, category, item, amount, notes])
+        
         await update.message.reply_text(
-            "Expense added! View here: https://docs.google.com/spreadsheets/d/193CMc6umAkjLgVlOIoLsud-cExLgDYAPl8svyA1XG1c/edit?usp=sharing"
+            "✅ Expense added!\nView sheet: https://docs.google.com/spreadsheets/d/193CMc6umAkjLgVlOIoLsud-cExLgDYAPl8svyA1XG1c/edit?usp=sharing"
         )
-    except:
+    except Exception as e:
         await update.message.reply_text(
-            "Format error. Use: `Item | Amount | Notes`",
+            "⚠️ Format error.\nUse this format:\n`Item | Amount | Notes`\n(e.g., `Fan | 129.90 | Bathroom`)",
             parse_mode="Markdown"
         )
+        print(f"Error parsing message: {e}")
+
 
 # === Main ===
 if __name__ == '__main__':
