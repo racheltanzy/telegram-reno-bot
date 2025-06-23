@@ -82,9 +82,11 @@ if __name__ == '__main__':
     # Run dummy web server in background
     threading.Thread(target=run_flask).start()
 
-    # Start Telegram bot
-    bot_app = ApplicationBuilder().token("8143805573:AAEqqg_r6t-S5ebW_ynmdYljW-bVXzC31kc").build()
-    bot_app.add_handler(CommandHandler("start", start))
-    bot_app.add_handler(CallbackQueryHandler(button))
-    bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    bot_app.run_polling()
+# Start Telegram bot
+bot_app = ApplicationBuilder().token("8143805573:AAEqqg_r6t-S5ebW_ynmdYljW-bVXzC31kc").build()
+bot_app.add_handler(CommandHandler("start", start))
+bot_app.add_handler(CallbackQueryHandler(button))
+bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+print("Bot is starting and polling for messages...")  # ✅ Logging to confirm start
+bot_app.run_polling()
